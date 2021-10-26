@@ -5,13 +5,16 @@ function App() {
 
   const [tarea, setTarea] = React.useState('');
   const [tareas, setTareas] = React.useState([]);
-  const [modoEdicion, setModoEdicion] = React.useState(false)
+  const [modoEdicion, setModoEdicion] = React.useState(false);
+  const [id, setId] = React.useState('');
+  const [error, setError] = React.useState(null)
 
 
   const agregarTarea = e => {
     e.preventDefault() //Nos detiene el evento Get
     if(!tarea.trim()){
       console.log('Elemento Vacío');
+      setError('Escriba algo, por favor ...');
       return
     }
     console.log(tarea)
@@ -21,6 +24,7 @@ function App() {
       {id: nanoid(10), nombreTarea:tarea}
     ])
     setTarea('')
+    setError(null)
 
   }
   const eliminarTarea = id =>{
@@ -29,9 +33,26 @@ function App() {
   }
   
   const editar = item => {
-    //console.log(item)
+    console.log(item)
     setModoEdicion(true);
-    setTarea(item.nombreTarea)
+    setTarea(item.nombreTarea);
+    setId(item.id);
+  }
+
+  const editarTarea = e => {
+    e.preventDefault()
+    if(!tarea.trim()){
+      console.log('Elemento Vacío');
+      setError('Escriba algo, por favor ...');
+      return
+    }
+
+    const arrayEditado = tareas.map(item => item.id === id ? {id, nombreTarea:tarea} : item)
+    setTareas(arrayEditado)
+    setModoEdicion(false);
+    setTarea('');
+    setId('');
+    setError(null)
   }
 
   return (
@@ -43,23 +64,30 @@ function App() {
           <h4 className="text-center">Lista de Tareas</h4>
           <ul className="list-group">
             {
-              tareas.map(item => (
-                <li className="list-group-item" key={item.id}>
-                  <span className="lead">{item.nombreTarea}</span>
-                  <button 
-                  className="btn btn-danger btn-sm float-end mx-2"
-                  onClick={() => eliminarTarea(item.id)}
-                  >
-                    Eliminar</button>
+              tareas.length === 0 ? (
+                <li className="list-group-item">No hay Tareas</li>
+              ) : (
+                tareas.map(item => (
+                  <li className="list-group-item" key={item.id}>
+                    <span className="lead">{item.nombreTarea}</span>
+                    <button 
+                    className="btn btn-danger btn-sm float-end mx-2"
+                    onClick={() => eliminarTarea(item.id)}
+                    >
+                      Eliminar</button>
+  
+                    <button
+                    className="btn btn-warning btn-sm float-end"
+                    onClick={() => editar(item)}
+                    >
+                      Editar</button>
+  
+                  </li>
+                ))
+              )
 
-                  <button
-                  className="btn btn-warning btn-sm float-end"
-                  onClick={() => editar(item)}
-                  >
-                    Editar</button>
 
-                </li>
-              ))
+              
             }
 
           </ul>
@@ -70,7 +98,11 @@ function App() {
             modoEdicion ? 'Editar Tarea' : 'Agregar Tarea'
           }
         </h4>
-        <form onSubmit={agregarTarea}>
+        <form onSubmit={modoEdicion ? editarTarea : agregarTarea}>
+
+          {
+            error ? <span className='text-danger'>{error}</span> : null
+          }
           <input 
           type="text" 
           className="form-control mb-2"
