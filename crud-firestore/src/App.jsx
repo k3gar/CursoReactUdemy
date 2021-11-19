@@ -78,7 +78,7 @@ function App() {
                 <li className="list-group-item" key={item.id}>
                   {item.name}
                   <button className="btn btn-danger btn-sm float-right" onClick={() => eliminar(item.id)}>Eliminar</button>
-                  <button className="btn btn-warning btn-sm float-right ">Editar</button>
+                  <button className="btn btn-warning btn-sm float-right " onClick={() => {}}>Editar</button>
                 </li>
               ))
             }
