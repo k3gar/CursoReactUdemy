@@ -4,6 +4,8 @@ function App() {
   const [tareas, setTareas] = React.useState([]);
   const [tarea, setTarea] = React.useState("");
   const [modoEdicion, setModoEdicion] = React.useState(false)
+  const [id, setId] = React.useState("")
+
   
 
   React.useEffect(()=> {
@@ -68,6 +70,37 @@ function App() {
     }
   }
 
+  const activarEdicion = (item) => {
+    setModoEdicion(true);
+    setTarea(item.name);
+    setId(item.id)
+  }
+
+  const editar = async (e) => {
+    e.preventDefault();
+    if(!tarea.trim()){
+      console.log('vacio')
+      return
+    }
+    try {
+      const db = firebase.firestore()
+      await db.collection('tareas').doc(id).update({
+        name: tarea
+      })
+      const arrayEditado = tareas.map(item => (
+        item.id === id ? {id: item.id, decha: item.fecha, name: tarea} : item
+      ))
+      setTareas(arrayEditado);
+      setModoEdicion(false);
+      setTarea('');
+      setId('')
+      
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
+
   return (
     <div className="container mt-3">
       <div className="row">
@@ -77,8 +110,8 @@ function App() {
               tareas.map(item => (
                 <li className="list-group-item" key={item.id}>
                   {item.name}
-                  <button className="btn btn-danger btn-sm float-right" onClick={() => eliminar(item.id)}>Eliminar</button>
-                  <button className="btn btn-warning btn-sm float-right " onClick={() => {}}>Editar</button>
+                  <button className="btn btn-danger btn-sm float-end ms-2" onClick={() => eliminar(item.id)}>Eliminar</button>
+                  <button className="btn btn-warning btn-sm float-end ms-2" onClick={() => activarEdicion(item)}>Editar</button>
                 </li>
               ))
             }
@@ -88,7 +121,7 @@ function App() {
           <h3>
             {modoEdicion ? 'Editar Tarea' : 'Agregar Tarea'}
             </h3>
-          <form onSubmit={agregar}>
+          <form onSubmit={modoEdicion ? editar : agregar}>
             <input type="text" placeholder="Ingrese Tarea" className="form-control mb-2" value={tarea} onChange={e => setTarea(e.target.value)} />
             <button className={
               modoEdicion ? 'btn btn-warning btn-block' : 'btn btn-dark btn-block'
