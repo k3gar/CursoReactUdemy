@@ -1,7 +1,8 @@
 import React from 'react';
-import {auth} from '../firebase';
+import {auth, db} from '../firebase';
+import { withRouter } from 'react-router-dom';
 
-const Login = () => {
+const Login = (props) => {
     //👇Estableciendo los estados para poder consultar los valores que se ingresan en el input
     const [email, setEmail] = React.useState('');
     const [pass, setPass] = React.useState('');
@@ -35,14 +36,28 @@ const Login = () => {
 
         if(esRegistro){
             registrar()
+        }else{
+            login()
         }
     }
 
     const registrar = React.useCallback(async () => {
 
         try {
+
+            // 'res' nos crea nuestro usuario, enviando los parámetros del correo y la contraseña
             const res = await auth.createUserWithEmailAndPassword(email, pass)
-            console.log(res.user)
+
+            //Consultamos la colección 'usuarios', creamos un nuevo documento que tendrá como título el email del usuario y agregaremos los campos del email y el uid
+            await db.collection('usuarios').doc(res.user.email).set({email: res.user.email, uid: res.user.uid })
+            //await db.collection(res.user.uid).add({name: 'Tarea de ejemplo', fecha: Date.now()})
+
+            //Vaciamos los estados para que no quede guardado
+            setEmail('')
+            setPass('')
+            setError(null)
+            //Nos permite forzar un cambio de pantalla al momento de hacer un login
+            props.history.push('/admin')
             
         } catch (error) {
             console.log(error)
@@ -54,7 +69,33 @@ const Login = () => {
             }
         }
 
-    }, [email, pass]) //Pasamos los states dentro de los corchetes para que los pueda leer
+    }, [email, pass,props.history]) //Pasamos los states dentro de los corchetes para que los pueda leer
+
+    const login = React.useCallback(async ()=> {
+        try {
+            //Intentamos hacer una validación del usuario y la contraseña.
+            const res = await auth.signInWithEmailAndPassword(email, pass);
+            console.log(res.user)
+
+            //Vaciamos los estados
+            setEmail('')
+            setPass('')
+            setError(null)
+            props.history.push('/admin')
+        } catch (error) {
+            console.log(error)
+            if(error.code === 'auth/user-not-found'){
+                setError("El usuario no existe")
+            }
+            if(error.code === 'auth/wrong-password'){
+                setError("Usuario o contraseña incorrecta")
+            }
+            
+        }
+    }, [email, pass, props.history])
+
+
+
 
     return (
     <div className="mt-5">
@@ -84,4 +125,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default withRouter(Login)
